@@ -10,7 +10,9 @@ from datetime import datetime
 from pathlib import Path
 
 from monitor.config import ConfigError, load_config
+from monitor.network import collect_network_checks
 from monitor.output import render_json, render_terminal
+from monitor.system import collect_system_metrics
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -29,10 +31,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def collect_checks(config: dict, section: str | None = None) -> dict:
-    """Collect requested checks. Check implementations are added by later modules."""
+    """Run the requested check categories."""
 
-    names = (section,) if section else ("system", "network", "services", "processes")
-    return {name: [] for name in names}
+    collectors = {
+        "system": lambda: collect_system_metrics(config["thresholds"]),
+        "network": lambda: collect_network_checks(config.get("network_checks", [])),
+        "services": lambda: [],
+        "processes": lambda: [],
+    }
+    names = (section,) if section else tuple(collectors)
+    return {name: collectors[name]() for name in names}
 
 
 def run_once(config: dict, section: str | None, json_output: bool) -> None:
