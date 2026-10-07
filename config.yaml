@@ -1,0 +1,31 @@
+monitoring:
+  interval_seconds: 30
+
+thresholds:
+  cpu:
+    warning: 75
+    critical: 90
+  memory:
+    warning: 80
+    critical: 95
+  disk:
+    warning: 80
+    critical: 90
+
+network_checks:
+  - name: Cloudflare DNS
+    host: 1.1.1.1
+    port: 53
+    timeout_seconds: 2
+  - name: Google DNS
+    host: 8.8.8.8
+    port: 53
+    timeout_seconds: 2
+
+http_checks:
+  - name: Example Service
+    url: https://example.com
+    expected_status: 200
+    timeout_seconds: 5
+
+process_checks: []
