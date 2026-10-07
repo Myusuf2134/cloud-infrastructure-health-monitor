@@ -100,6 +100,9 @@ Timestamp: 2026-10-07T01:57:22+00:00
 
 Values vary by machine and network conditions.
 
+## Real Output 
+<img width="1469" height="896" alt="image" src="https://github.com/user-attachments/assets/764ffc0c-566a-4131-ac73-40c450aa1daf" />
+
 ## Configuration
 
 `config.yaml` is ready to run. `config.example.yaml` shows local-service and process examples. Utilization thresholds are inclusive: a value equal to `warning` is `WARNING`, and one equal to `critical` is `CRITICAL`.
