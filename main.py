@@ -4,14 +4,20 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
 from monitor.config import ConfigError, load_config
+from monitor.diagnostics import enrich_diagnostics
+from monitor.health import CheckResult, HealthStatus
+from monitor.logging_config import log_result, setup_logging
 from monitor.network import collect_network_checks
 from monitor.output import render_json, render_terminal
+from monitor.processes import collect_process_checks
+from monitor.services import collect_http_checks
 from monitor.system import collect_system_metrics
 
 
@@ -30,27 +36,46 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def collect_checks(config: dict, section: str | None = None) -> dict:
+def collect_checks(config: dict, section: str | None = None) -> dict[str, list[CheckResult]]:
     """Run the requested check categories."""
 
     collectors = {
         "system": lambda: collect_system_metrics(config["thresholds"]),
         "network": lambda: collect_network_checks(config.get("network_checks", [])),
-        "services": lambda: [],
-        "processes": lambda: [],
+        "services": lambda: collect_http_checks(config.get("http_checks", [])),
+        "processes": lambda: collect_process_checks(config.get("process_checks", [])),
     }
     names = (section,) if section else tuple(collectors)
-    return {name: collectors[name]() for name in names}
+    sections: dict[str, list[CheckResult]] = {}
+    for name in names:
+        try:
+            sections[name] = [enrich_diagnostics(result) for result in collectors[name]()]
+        except Exception as exc:  # A single collector must not crash the monitoring run.
+            logging.getLogger("cloud_health_monitor").exception("Unexpected %s collector failure", name)
+            sections[name] = [
+                CheckResult(
+                    f"{name.title()} Checks",
+                    HealthStatus.UNKNOWN,
+                    "Unexpected error",
+                    {"error": str(exc)},
+                    [f"Observed: the {name} collector encountered an unexpected error."],
+                )
+            ]
+    return sections
 
 
-def run_once(config: dict, section: str | None, json_output: bool) -> None:
+def run_once(config: dict, section: str | None, json_output: bool, logger: logging.Logger) -> None:
     sections = collect_checks(config, section)
+    for section_name, results in sections.items():
+        for result in results:
+            log_result(logger, section_name, result)
     timestamp = datetime.now().astimezone()
     print(render_json(sections, timestamp) if json_output else render_terminal(sections, timestamp))
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    logger = setup_logging()
     try:
         config = load_config(Path(args.config))
     except ConfigError as exc:
@@ -59,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         while True:
-            run_once(config, args.section, args.json_output)
+            run_once(config, args.section, args.json_output, logger)
             if not args.watch:
                 break
             time.sleep(config["monitoring"]["interval_seconds"])

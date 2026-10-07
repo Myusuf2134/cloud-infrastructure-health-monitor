@@ -70,6 +70,13 @@ def _validate_checks(config: dict[str, Any]) -> None:
         if "timeout_seconds" in check:
             _number(check["timeout_seconds"], f"http_checks[{index}].timeout_seconds", 0.1)
 
+    for index, check in enumerate(config.get("process_checks", [])):
+        process_name = check.get("process_name")
+        if not isinstance(process_name, str) or not process_name.strip():
+            raise ConfigError(
+                f"'process_checks[{index}].process_name' must be a non-empty string."
+            )
+
 
 def validate_config(config: Any) -> dict[str, Any]:
     root = _require_mapping(config, "configuration")
