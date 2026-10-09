@@ -9,10 +9,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY monitor ./monitor
-COPY main.py config.yaml ./
+COPY static ./static
+COPY templates ./templates
+COPY main.py dashboard.py config.yaml ./
 
 RUN mkdir -p /app/logs && useradd --create-home --uid 10001 monitor \
     && chown -R monitor:monitor /app
 USER monitor
 
+EXPOSE 5000
 CMD ["python", "main.py"]

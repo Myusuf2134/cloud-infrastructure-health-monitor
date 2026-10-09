@@ -1,6 +1,6 @@
 # Cloud Infrastructure Health Monitor
 
-A lightweight Python CLI that provides a quick operational view of host resources, network connectivity, HTTP services, and expected processes. It runs locally on macOS or Linux, requires no paid services, and supports both human-readable and JSON output.
+A lightweight Python monitor with a polished live operations dashboard and CLI. It provides quick visibility into host resources, network connectivity, HTTP services, and expected processes, runs locally on macOS or Linux, and requires no paid services.
 
 ## Why I Built This
 
@@ -15,6 +15,7 @@ Infrastructure teams need fast visibility into server health, network connectivi
 - Configurable `HEALTHY`, `WARNING`, `CRITICAL`, and `UNKNOWN` states
 - YAML configuration with user-friendly validation errors
 - Terminal, JSON, one-shot, watch, and section-specific modes
+- Responsive live web dashboard with filtering, auto-refresh, and diagnostics
 - Rotating operational logs in `logs/monitor.log`
 - Evidence-based diagnostics that separate observations from possible causes
 - Deterministic incident-context interface for optional future local AI integrations
@@ -33,7 +34,7 @@ flowchart TD
     N --> E
     H --> E
     P --> E
-    E --> O[Terminal / JSON / Rotating Logs]
+    E --> O[Dashboard / Terminal / JSON / Rotating Logs]
     E --> D[Deterministic Diagnostics]
 ```
 
@@ -65,6 +66,28 @@ python main.py --help
 ```
 
 Press `Ctrl+C` to stop watch mode. Run from the repository root unless an explicit configuration path is supplied.
+
+## Web Dashboard
+
+Start the local dashboard:
+
+```bash
+python dashboard.py
+```
+
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000). The responsive interface provides:
+
+- overall health and status counts
+- resource utilization cards and threshold context
+- network and service reachability details
+- active diagnostic guidance
+- section filters, manual refresh, and config-driven automatic refresh
+
+The dashboard uses the same collectors, status engine, YAML configuration, and rotating logs as the CLI. It binds to localhost by default. To choose another config or port:
+
+```bash
+python dashboard.py --config config.example.yaml --port 5050
+```
 
 ## Example Output
 
@@ -147,6 +170,8 @@ Failures include an observed symptom and clearly labeled investigation ideas. Fo
 docker build -t cloud-health-monitor .
 docker run --rm cloud-health-monitor
 docker run --rm cloud-health-monitor python main.py --json
+docker run --rm -p 5000:5000 cloud-health-monitor \
+  python dashboard.py --host 0.0.0.0
 ```
 
 To use a custom file, mount it read-only:

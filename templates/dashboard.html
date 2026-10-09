@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Live local infrastructure health dashboard">
+    <title>Infrastructure Health Console</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#overview" aria-label="Infrastructure Health Console home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 36 36"><path d="M18 3 31 10.5v15L18 33 5 25.5v-15L18 3Z"/><path d="m11 19 4 4 10-11"/></svg>
+          </span>
+          <span><strong>CloudOps</strong><small>Health Console</small></span>
+        </a>
+
+        <nav aria-label="Dashboard sections">
+          <button class="nav-item active" data-filter="all"><span class="nav-icon">◫</span> Overview</button>
+          <button class="nav-item" data-filter="system"><span class="nav-icon">⌁</span> System</button>
+          <button class="nav-item" data-filter="network"><span class="nav-icon">⌬</span> Network</button>
+          <button class="nav-item" data-filter="services"><span class="nav-icon">◇</span> Services</button>
+          <button class="nav-item" data-filter="processes"><span class="nav-icon">≋</span> Processes</button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="agent-state"><span class="pulse-dot"></span><div><strong>Monitor active</strong><small>Local agent</small></div></div>
+          <div class="version">v1.0.0</div>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">OPERATIONS / LIVE STATUS</p>
+            <h1>Infrastructure overview</h1>
+            <p class="subtitle">Real-time visibility across host resources and service dependencies.</p>
+          </div>
+          <div class="topbar-actions">
+            <div class="last-updated"><span>LAST UPDATED</span><strong id="last-updated">Waiting for data</strong></div>
+            <button id="refresh-button" class="refresh-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18.4 9A7 7 0 0 0 6.3 6.3L4 8m16 8-2.3 1.7A7 7 0 0 1 5.6 15"/></svg>
+              Refresh
+            </button>
+          </div>
+        </header>
+
+        <section id="error-banner" class="error-banner hidden" role="alert"></section>
+
+        <section class="hero-grid" id="overview">
+          <article class="overall-card panel">
+            <div class="panel-heading"><span>OVERALL HEALTH</span><span class="live-pill"><i></i> LIVE</span></div>
+            <div class="overall-content">
+              <div id="health-orbit" class="health-orbit loading"><div><strong id="overall-status">—</strong><span>Current status</span></div></div>
+              <div class="overall-copy">
+                <h2 id="health-headline">Collecting telemetry</h2>
+                <p id="health-summary">Running system, network, and application checks.</p>
+                <div class="status-counts">
+                  <span><i class="dot healthy"></i><strong id="healthy-count">0</strong> Healthy</span>
+                  <span><i class="dot warning"></i><strong id="warning-count">0</strong> Warning</span>
+                  <span><i class="dot critical"></i><strong id="critical-count">0</strong> Critical</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="summary-card panel">
+            <div class="panel-heading"><span>CHECK COVERAGE</span><span id="check-total" class="metric-kicker">0 checks</span></div>
+            <div class="coverage-grid">
+              <div><span>SYS</span><strong id="system-count">0</strong><small>host metrics</small></div>
+              <div><span>NET</span><strong id="network-count">0</strong><small>network targets</small></div>
+              <div><span>API</span><strong id="services-count">0</strong><small>service endpoints</small></div>
+              <div><span>PROC</span><strong id="processes-count">0</strong><small>process checks</small></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="section-block" data-section="system">
+          <div class="section-title"><div><p class="eyebrow">HOST TELEMETRY</p><h2>System resources</h2></div><span class="section-state" id="system-state">Loading</span></div>
+          <div id="system-grid" class="metric-grid skeleton-grid">
+            <div class="skeleton card-skeleton"></div><div class="skeleton card-skeleton"></div><div class="skeleton card-skeleton"></div>
+          </div>
+        </section>
+
+        <section class="lower-grid">
+          <article class="panel section-panel" data-section="network">
+            <div class="section-title compact"><div><p class="eyebrow">CONNECTIVITY</p><h2>Network targets</h2></div><span class="section-state" id="network-state">Loading</span></div>
+            <div id="network-list" class="check-list"><div class="skeleton list-skeleton"></div></div>
+          </article>
+
+          <article class="panel section-panel" data-section="services">
+            <div class="section-title compact"><div><p class="eyebrow">APPLICATIONS</p><h2>Service health</h2></div><span class="section-state" id="services-state">Loading</span></div>
+            <div id="services-list" class="check-list"><div class="skeleton list-skeleton"></div></div>
+          </article>
+        </section>
+
+        <section class="panel section-panel process-panel" data-section="processes">
+          <div class="section-title compact"><div><p class="eyebrow">RUNTIME</p><h2>Expected processes</h2></div><span class="section-state" id="processes-state">Loading</span></div>
+          <div id="processes-list" class="check-list"><div class="skeleton list-skeleton"></div></div>
+        </section>
+
+        <section class="panel diagnostics-panel" data-section="diagnostics">
+          <div class="section-title compact"><div><p class="eyebrow">OPERATOR CONTEXT</p><h2>Diagnostics</h2></div><span id="diagnostic-count" class="metric-kicker">0 observations</span></div>
+          <div id="diagnostics-list" class="diagnostics-empty">
+            <span class="empty-icon">✓</span><div><strong>No active incidents</strong><p>Diagnostic guidance will appear here when a check needs attention.</p></div>
+          </div>
+        </section>
+
+        <footer><span>Cloud Infrastructure Health Monitor</span><span>Local-only · No telemetry leaves this machine</span></footer>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+  </body>
+</html>
